@@ -1,0 +1,418 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="ackermann_robot">
+
+  <!-- Dummy base footprint link to avoid KDL warning -->
+  <link name="base_footprint"/>
+
+  <!-- Joint connecting base_footprint to base_link -->
+  <joint name="base_footprint_joint" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 0.097" rpy="0 0 0"/> 
+  </joint>
+
+  <!-- Base Link - Main robot chassis -->
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <box size="0.60 0.463 0.05"/>  <!-- 60cm length x 46.3cm width x 5cm height -->
+      </geometry>
+      <material name="blue">
+        <color rgba="0 0 0.8 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.60 0.463 0.05"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="10.0"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="0.1475" ixy="0" ixz="0" iyy="0.3025" iyz="0" izz="0.4425"/>
+    </inertial>
+  </link>
+
+  <!-- Front Left Steering Knuckle -->
+  <link name="front_left_steering_knuckle">
+    <visual>
+      <geometry>
+        <box size="0.05 0.05 0.10"/>
+      </geometry>
+      <material name="gray">
+        <color rgba="0.5 0.5 0.5 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.05 0.05 0.10"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.2"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="0.0002" ixy="0" ixz="0" iyy="0.0002" iyz="0" izz="0.0001"/>
+    </inertial>
+  </link>
+
+  <!-- Front Right Steering Knuckle -->
+  <link name="front_right_steering_knuckle">
+    <visual>
+      <geometry>
+        <box size="0.05 0.05 0.10"/>
+      </geometry>
+      <material name="gray">
+        <color rgba="0.5 0.5 0.5 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.05 0.05 0.10"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.2"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="0.0002" ixy="0" ixz="0" iyy="0.0002" iyz="0" izz="0.0001"/>
+    </inertial>
+  </link>
+
+  <!-- Front Left Wheel -->
+  <link name="front_left_wheel">
+    <visual>
+      <geometry>
+        <cylinder radius="0.0585" length="0.065"/>
+      </geometry>
+      <material name="black">
+        <color rgba="0 0 0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder radius="0.0585" length="0.065"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.5"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="0.000531" ixy="0" ixz="0" iyy="0.000531" iyz="0" izz="0.000856"/>
+    </inertial>
+  </link>
+
+  <!-- Front Right Wheel -->
+  <link name="front_right_wheel">
+    <visual>
+      <geometry>
+        <cylinder radius="0.0585" length="0.065"/>
+      </geometry>
+      <material name="black">
+        <color rgba="0 0 0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder radius="0.0585" length="0.065"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.5"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="0.000531" ixy="0" ixz="0" iyy="0.000531" iyz="0" izz="0.000856"/>
+    </inertial>
+  </link>
+
+  <!-- Rear Left Wheel -->
+  <link name="rear_left_wheel">
+    <visual>
+      <geometry>
+        <cylinder radius="0.0585" length="0.065"/>
+      </geometry>
+      <material name="black">
+        <color rgba="0 0 0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder radius="0.0585" length="0.065"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.5"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="0.000531" ixy="0" ixz="0" iyy="0.000531" iyz="0" izz="0.000856"/>
+    </inertial>
+  </link>
+
+  <!-- Rear Right Wheel -->
+  <link name="rear_right_wheel">
+    <visual>
+      <geometry>
+        <cylinder radius="0.0585" length="0.065"/>
+      </geometry>
+      <material name="black">
+        <color rgba="0 0 0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder radius="0.0585" length="0.065"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.5"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="0.000531" ixy="0" ixz="0" iyy="0.000531" iyz="0" izz="0.000856"/>
+    </inertial>
+  </link>
+
+  <!-- IMU Sensor -->
+  <link name="imu_link">
+    <visual>
+      <geometry>
+        <box size="0.05 0.05 0.02"/>
+      </geometry>
+      <material name="green">
+        <color rgba="0 0.8 0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.05 0.05 0.02"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.1"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="0.00001" ixy="0" ixz="0" iyy="0.00001" iyz="0" izz="0.00002"/>
+    </inertial>
+  </link>
+
+  <!-- cam_link1 -->
+  <link name="cam_link1">
+    <visual>
+      <geometry>
+        <box size="0.2025 0.02 0.02"/>  <!--length x width x height -->
+      </geometry>
+      <material name="blue">
+        <color rgba="0 0 0.8 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.2025 0.02 0.02"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- cam_link2 -->
+  <link name="cam_link2">
+    <visual>
+      <geometry>
+        <box size="0.087 0.02 0.02"/> 
+      </geometry>
+      <material name="blue">
+        <color rgba="0 0 0.8 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.087 0.02 0.02"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- cam0 -->
+  <link name="cam0">
+    <visual>
+      <geometry>
+        <box size="0.02 0.02 0.02"/> 
+      </geometry>
+      <material name="blue">
+        <color rgba="0 0 0.8 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.02 0.02 0.02"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- cam0_undis -->
+  <link name="cam0_undis">
+    <visual>
+      <geometry>
+        <box size="0.028 0.028 0.028"/> 
+      </geometry>
+      <material name="green">
+        <color rgba="0 0.8 0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.028 0.028 0.028"/>
+      </geometry>
+    </collision>
+  </link>
+  <!-- cam0_depth -->
+  <link name="cam0_depth">
+    <visual>
+      <geometry>
+        <box size="0.028 0.028 0.028"/> 
+      </geometry>
+      <material name="green">
+        <color rgba="0 0.8 0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.028 0.028 0.028"/>
+      </geometry>
+    </collision>
+  </link>
+  <!-- JOINTS -->
+
+  <!-- Front Left Steering Joint -->
+  <joint name="front_left_steering_joint" type="revolute">
+    <parent link="base_link"/>
+    <child link="front_left_steering_knuckle"/>
+    <origin xyz="0.21 0.21 -0.025" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-0.6109" upper="0.6109" effort="100" velocity="1.0"/>
+    <dynamics damping="0.1" friction="0.01"/>
+  </joint>
+
+  <!-- Front Right Steering Joint - Mimic Front Left -->
+  <joint name="front_right_steering_joint" type="revolute">
+    <parent link="base_link"/>
+    <child link="front_right_steering_knuckle"/>
+    <origin xyz="0.21 -0.21 -0.025" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-0.6109" upper="0.6109" effort="100" velocity="1.0"/>
+    <dynamics damping="0.1" friction="0.01"/>
+    <mimic joint="front_left_steering_joint" multiplier="1" offset="0"/>
+  </joint>
+
+  <!-- Front Left Wheel Joint -->
+  <joint name="front_left_wheel_joint" type="continuous">
+    <parent link="front_left_steering_knuckle"/>
+    <child link="front_left_wheel"/>
+    <origin xyz="0 0 0" rpy="-1.5708 0 0"/>
+    <axis xyz="0 0 1"/>
+    <dynamics damping="0.2" friction="0.1"/>
+  </joint>
+
+  <!-- Front Right Wheel Joint - Mimic Front Left -->
+  <joint name="front_right_wheel_joint" type="continuous">
+    <parent link="front_right_steering_knuckle"/>
+    <child link="front_right_wheel"/>
+    <origin xyz="0 0 0" rpy="-1.5708 0 0"/>
+    <axis xyz="0 0 1"/>
+    <dynamics damping="0.2" friction="0.1"/>
+    <mimic joint="front_left_wheel_joint" multiplier="1" offset="0"/>
+  </joint>
+
+  <!-- Rear Left Wheel Joint (DRIVEN) -->
+  <joint name="rear_left_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="rear_left_wheel"/>
+    <origin xyz="-0.21 0.21 -0.025" rpy="-1.5708 0 0"/>
+    <axis xyz="0 0 1"/>
+    <dynamics damping="0.2" friction="0.1"/>
+  </joint>
+
+  <!-- Rear Right Wheel Joint (DRIVEN) - Mimic Rear Left -->
+  <joint name="rear_right_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="rear_right_wheel"/>
+    <origin xyz="-0.21 -0.21 -0.025" rpy="-1.5708 0 0"/>
+    <axis xyz="0 0 1"/>
+    <dynamics damping="0.2" friction="0.1"/>
+    <mimic joint="rear_left_wheel_joint" multiplier="1" offset="0"/>
+  </joint>
+
+  <!-- IMU Joint -->
+  <joint name="imu_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="imu_link"/>
+    <!-- <origin xyz="0.387 0 0.016" rpy="0 0 0"/> -->
+    <origin xyz="0.338 0 0.095" rpy="0 0 0"/>
+  </joint>
+
+  <!-- cam_link1 Joint -->
+  <joint name="cam_link1_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="cam_link1"/>
+    <origin xyz="0.409 0 0.2845" rpy="0 0.436332313 0"/> <!-- 0.436332313 rad = 25 degree -->
+  </joint>
+
+  <!-- cam_link2 Joint -->
+  <joint name="cam_link2_joint" type="fixed">
+    <parent link="cam_link1"/>
+    <child link="cam_link2"/>
+    <origin xyz="0.087 0 0" rpy="0 0 0"/> 
+  </joint>
+
+  <!-- cam0 Joint -->
+  <joint name="cam0_joint" type="fixed">
+    <parent link="cam_link2"/>
+    <child link="cam0"/>
+    <origin xyz="0 0 0.058" rpy="0 0 0"/>
+  </joint>
+
+  <!-- cam0_undis Joint -->
+  <joint name="cam0_undis_joint" type="fixed">
+    <parent link="cam0"/>
+    <child link="cam0_undis"/>
+    <origin xyz="0 0 0" rpy="-1.5707963268 0 -1.5707963268"/>
+  </joint>
+
+  <!-- cam0_depth Joint -->
+  <joint name="cam0_depth_joint" type="fixed">
+    <parent link="cam0"/>
+    <child link="cam0_depth"/>
+    <origin xyz="0 0 0" rpy="-1.5707963268 0 -1.5707963268"/>
+  </joint>
+
+  <!-- Gazebo-specific elements -->
+  <gazebo reference="base_link">
+    <material>Gazebo/Blue</material>
+  </gazebo>
+
+  <gazebo reference="front_left_wheel">
+    <material>Gazebo/Black</material>
+    <mu1>1.0</mu1>
+    <mu2>1.0</mu2>
+  </gazebo>
+
+  <gazebo reference="front_right_wheel">
+    <material>Gazebo/Black</material>
+    <mu1>1.0</mu1>
+    <mu2>1.0</mu2>
+  </gazebo>
+
+  <gazebo reference="rear_left_wheel">
+    <material>Gazebo/Black</material>
+    <mu1>1.0</mu1>
+    <mu2>1.0</mu2>
+  </gazebo>
+
+  <gazebo reference="rear_right_wheel">
+    <material>Gazebo/Black</material>
+    <mu1>1.0</mu1>
+    <mu2>1.0</mu2>
+  </gazebo>
+
+  <gazebo reference="front_left_steering_knuckle">
+    <material>Gazebo/Grey</material>
+  </gazebo>
+
+  <gazebo reference="front_right_steering_knuckle">
+    <material>Gazebo/Grey</material>
+  </gazebo>
+
+  <gazebo reference="imu_link">
+    <material>Gazebo/Green</material>
+  </gazebo>
+  
+</robot>

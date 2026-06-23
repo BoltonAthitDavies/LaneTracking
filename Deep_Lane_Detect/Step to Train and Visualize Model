@@ -1,0 +1,11 @@
+Step to train UFLD-V2
+1. python preprocessing/extract_frames_from_video_resize.py --input "raw_dataset" --output "dataset" --frequency 5
+2. - python preprocessing/generate_tusimple_from_original.py --image-dir dataset/test/images/img --output-json test_label.json
+   - python preprocessing/generate_tusimple_from_original.py --image-dir dataset/training/images/img --output-json label_data_training.json
+3. python preprocessing/test_task_to_tusimple.py
+4. python preprocessing/convert_tusimple.py --root /home/alex1/UFLD-V2-TEST
+5. python Ultra-Fast-Lane-Detection-v2/train.py configs/tusimple_res34.py
+
+Step to visualize
+1. python preprocessing/sort_test_txt_by_filename.py --input test.txt --output sorted_test.txt
+2. python Ultra-Fast-Lane-Detection-v2/demo.py configs/tusimple_res34.py

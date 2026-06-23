@@ -1,0 +1,53 @@
+dataset= 'Tusimple'
+data_root= '/home/alex1/LaneTracking/Deep_Lane_Detect' # Need to be modified before running
+epoch= 100
+batch_size= 32
+optimizer= 'SGD'
+
+# learning_rate= 0.05
+learning_rate= 0.01
+# learning_rate= 0.008
+
+weight_decay= 0.0001
+momentum= 0.9
+scheduler= 'multi'
+steps= [50,75]
+gamma= 0.1
+warmup= 'linear'
+warmup_iters= 100
+backbone= '34'
+griding_num= 100
+use_aux= False
+sim_loss_w= 0.0
+shp_loss_w= 0.0
+note= ''
+log_path= '/home/alex1/LaneTracking/Deep_Lane_Detect/logs'
+finetune= None
+resume= None
+test_model= '/home/alex1/LaneTracking/Deep_Lane_Detect/logs/20250912_101805_lr_1e-02_b_32/model_best_accuracy.pth'
+test_work_dir= '/home/alex1/LaneTracking/Deep_Lane_Detect/tmp'
+# num_lanes= 4
+num_lanes= 2
+var_loss_power= 2.0
+auto_backup= True
+
+num_row= 72 # match with len of h_samples
+num_col= 81
+#num_col= 41
+
+train_width= 480
+train_height= 320
+
+num_cell_row= 100
+# num_cell_row= 200
+num_cell_col= 100
+
+mean_loss_w= 0.05
+fc_norm= False
+soft_loss= True
+cls_loss_col_w= 1.0
+cls_ext_col_w= 1.0
+mean_loss_col_w= 0.05
+eval_mode= 'normal'
+
+crop_ratio = 1.0

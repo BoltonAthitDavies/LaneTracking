@@ -1,0 +1,1 @@
+echo "source /home/ubuntu/LaneTracking/ros2_ws/install/setup.bash" >> ~/.bashrc

@@ -34,6 +34,7 @@ install(PROGRAMS
   scripts/plotter_node.py
   scripts/lowpass_filter.py
   scripts/byd_pid_controller.py
+  scripts/mqtt_bridge_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

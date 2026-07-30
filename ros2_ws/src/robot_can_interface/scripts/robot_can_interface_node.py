@@ -63,7 +63,7 @@ class RobotCANInterface(Node):
             raise
         
         self.cmd_velocity = 0.0
-        self.cmd_steering = 0.1
+        self.cmd_steering = 0.0
         self.cmd_lock = threading.Lock()
 
         self.running = True
@@ -157,7 +157,8 @@ class RobotCANInterface(Node):
     
     def cmd_steering_callback(self, msg):
         with self.cmd_lock:
-            self.cmd_steering = max(-self.steering_limit, min(self.steering_limit, msg.data))
+            value = max(-self.steering_limit, min(self.steering_limit, msg.data))
+            self.cmd_steering = 0.00001 if value == 0.0 else value
     
     def send_can_message(self, velocity, steering):
         if self.use_socketcan:

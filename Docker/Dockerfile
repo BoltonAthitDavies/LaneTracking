@@ -233,3 +233,7 @@ CMD ["/bin/bash"]
 
 # Set the default shell to Bash and ensure .bashrc is sourced
 SHELL ["/bin/bash", "-c"]
+
+# Install MQTT broker and Python client
+RUN apt-get update && apt-get install -y mosquitto mosquitto-clients && rm -rf /var/lib/apt/lists/*
+RUN pip3 install paho-mqtt

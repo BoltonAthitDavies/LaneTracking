@@ -162,7 +162,53 @@ ros2 topic pub /cmd_steering std_msgs/msg/Float64 "data: 0.0"
 
 ---
 
-## 5. Stereo Depth Tuning Parameters
+## 5. Smartphone Control via MQTT (IOT MQTT Panel)
+
+The `mqtt_bridge_node` connects your phone to the robot over Wi-Fi using MQTT.
+
+### Requirements
+
+- **Mosquitto** broker installed in the Docker container (`apt-get install -y mosquitto`)
+- **paho-mqtt** Python library installed in the container (`pip3 install paho-mqtt`)
+- **IOT MQTT Panel** app on your smartphone (Android/iOS)
+
+### Start the MQTT Broker
+
+```bash
+# Inside the Docker container
+mosquitto -c /home/ubuntu/LaneTracking/mosquitto.conf -v
+```
+
+### Start the Bridge Node
+
+```bash
+# In a second terminal inside the container
+ros2 run robot_controller mqtt_bridge_node.py
+```
+
+### Phone App Setup (IOT MQTT Panel)
+
+| Field | Value |
+|-------|-------|
+| Broker address | `10.157.10.156` (Jetson IP) |
+| Port | `1883` |
+| Client ID | anything (e.g. `phone`) |
+| Username / Password | leave blank |
+
+Add controls that publish to these MQTT topics:
+
+| MQTT Topic | Type | Effect |
+|---|---|---|
+| `robot/cmd_velocity` | Slider / number | Sets speed (m/s) |
+| `robot/cmd_steering` | Slider / number | Sets steering angle (degrees) |
+| `robot/stop` | Button | Sets both velocity and steering to 0 |
+| `robot/status` | Subscribe (text) | Shows `online` heartbeat from robot |
+
+Payload format: plain number (e.g. `1.5`) or JSON `{"data": 1.5}`.
+
+---
+
+## 7. Stereo Depth Tuning Parameters
 
 Adjust these parameters in the camera node to tune depth quality:
 
@@ -173,7 +219,7 @@ Adjust these parameters in the camera node to tune depth quality:
 
 ---
 
-## 6. Deep Learning Model — Lane Detection
+## 8. Deep Learning Model — Lane Detection
 
 The lane detection model (UFLD-V2, ResNet-34 backbone) must be converted for fast inference on Jetson using TensorRT.
 
@@ -196,7 +242,7 @@ python deploy/pt2onnx.py \
 
 ---
 
-## 7. Troubleshooting
+## 9. Troubleshooting
 
 **Serial port permission denied:**
 ```bash
@@ -220,7 +266,7 @@ colcon build
 
 ---
 
-## 8. Useful Docker Commands
+## 10. Useful Docker Commands
 
 ```bash
 docker ps                          # list running containers

@@ -183,8 +183,8 @@ class CascadePIDNode(Node):
             self.target_speed = self.get_parameter('target_speed').value
             self.compute_target_steer(self.offset)
 
-        if self.target_steer <  0.1  and self.target_steer > -0.1:
-            self.target_steer = 0.1    
+        # if self.target_steer <  0.1  and self.target_steer > -0.1:
+        #     self.target_steer = 0.1
 
         steer_cmd = self.compute_steer_pid()
         speed_cmd = self.compute_speed_pid()

@@ -208,6 +208,51 @@ Payload format: plain number (e.g. `1.5`) or JSON `{"data": 1.5}`.
 
 ---
 
+## 6. VINS-Fusion (Visual-Inertial Odometry)
+
+`vins_fusion_ros2` (symlinked into `ros2_ws/src/`) builds as part of the workspace. It provides
+`vins_fusion_ros2_node`, a generic stereo + IMU visual-inertial odometry estimator.
+
+### Run on this robot's stereo fisheye cameras (WiL config)
+
+First, start the cameras so images are actually publishing on `/cam0/image_raw` and
+`/cam1/image_raw`:
+```bash
+ros2 launch robot_camera dual_camera.launch.py
+```
+
+Then, in another terminal, run the estimator against the real calibration
+(`config/wil/stereo.yaml`, `config/wil/cam0_fisheye.yaml`, `config/wil/cam1_fisheye.yaml` — built
+from this rig's `fisheye_calibration.json` intrinsics and `camera0/1_rot_trans.dat` stereo
+extrinsics):
+```bash
+ros2 run vins_fusion_ros2 vins_fusion_ros2_node --ros-args \
+  -p config_file:=/home/ubuntu/LaneTracking/vins_fusion_ros2/config/wil/stereo.yaml \
+  -p use_sim_time:=false
+```
+
+> `cam1_fisheye.yaml` currently reuses cam0's intrinsics since only one mono calibration exists
+> for this rig — replace it with a real cam1-specific calibration if the two cameras differ
+> meaningfully.
+
+### Other configs
+
+```bash
+ros2 launch vins_fusion_ros2 vins_fusion_ros2.launch.py
+# or, with an explicit config:
+ros2 run vins_fusion_ros2 vins_fusion_ros2_node \
+  --ros-args -p config_file:=src/vins_fusion_ros2/config/euroc/euroc_stereo_config.yaml
+```
+
+> The remaining shipped configs (`config/euroc`, `config/mynteye`, `config/realsense_d435i`, etc.)
+> are examples for other camera rigs, not this robot. A handful of CARLA-simulator and
+> `global_fusion`-dependent executables from this package (`carla_vins_node`,
+> `carla_vins_multi_node`, `vins_bag_reader`) are excluded from the default build since they need
+> a CARLA SDK / sibling package not present here; they can be re-enabled with
+> `colcon build --cmake-args -DWITH_CARLA=ON` on a machine that has both.
+
+---
+
 ## 7. Stereo Depth Tuning Parameters
 
 Adjust these parameters in the camera node to tune depth quality:

@@ -86,6 +86,22 @@ RUN apt-get update && \
 # Clean apt cache
 RUN rm -rf /var/lib/apt/lists/*
 
+# glog for Ceres (below). Eigen3 is already provided by the base image.
+RUN apt-get update && \
+    apt-get install -y libgoogle-glog-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+# Build & install Ceres 2.2 from source for vins_fusion_ros2 (VINS-Fusion).
+# apt only ships Ceres 1.14 here, which predates the ceres::Manifold API the
+# code uses. VINS only needs DENSE_SCHUR/DENSE_QR, so SuiteSparse/gflags are
+# skipped to keep this build lean.
+RUN git clone --branch 2.2.0 --depth 1 https://github.com/ceres-solver/ceres-solver.git /tmp/ceres-solver && \
+    cmake -S /tmp/ceres-solver -B /tmp/ceres-solver/build \
+        -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_TESTING=OFF && \
+    cmake --build /tmp/ceres-solver/build --parallel $(nproc) && \
+    cmake --install /tmp/ceres-solver/build && \
+    rm -rf /tmp/ceres-solver
+
 # Initialize rosdep if not already done
 RUN if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then \
         rosdep init || echo "rosdep init failed"; \

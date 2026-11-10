@@ -21,5 +21,4 @@ ros2_ws/build_docker/
 ros2_ws/install_docker/
 ros2_ws/log_docker/
 cam_param/
-WiL/stereo_fisheye_camera_calibration/cam_param/
 map/

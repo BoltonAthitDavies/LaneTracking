@@ -21,6 +21,7 @@ run_container() {
         -v /etc/enctune.conf:/etc/enctune.conf \
         -v /etc/nv_tegra_release:/etc/nv_tegra_release \
         -v /tmp/nv_ds_performance:/tmp/nv_ds_performance \
+        -e ROS_DOMAIN_ID=29 \
         -e DISPLAY=$DISPLAY \
         -v /tmp/.X11-unix:/tmp/.X11-unix \
         -v ~/LaneTracking:/home/ubuntu/LaneTracking \

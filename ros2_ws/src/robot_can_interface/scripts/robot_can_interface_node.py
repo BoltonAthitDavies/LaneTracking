@@ -2,7 +2,10 @@
 
 import rclpy
 from rclpy.node import Node
+from rclpy.clock import Clock, ClockType
+from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile, ReliabilityPolicy
 from std_msgs.msg import Float64
+from rosgraph_msgs.msg import Clock as ClockMsg
 import struct
 import threading
 import socket
@@ -25,6 +28,8 @@ class RobotCANInterface(Node):
         self.declare_parameter('velocity_limit', 5.0)
         self.declare_parameter('steering_limit', 40.0)
         self.declare_parameter('log_feedback', False)
+        self.declare_parameter('publish_clock', True)
+        self.declare_parameter('clock_rate_hz', 100.0)
         
         self.can_interface = self.get_parameter('can_interface').value
         self.interface_type = self.get_parameter('interface_type').value
@@ -33,6 +38,8 @@ class RobotCANInterface(Node):
         self.velocity_limit = self.get_parameter('velocity_limit').value
         self.steering_limit = self.get_parameter('steering_limit').value
         self.log_feedback = self.get_parameter('log_feedback').value
+        self.publish_clock = self.get_parameter('publish_clock').value
+        self.clock_rate_hz = self.get_parameter('clock_rate_hz').value
         
         self.control_can_id = 0x202
         self.feedback_can_id = 0x182
@@ -91,6 +98,11 @@ class RobotCANInterface(Node):
         self.feedback_velocity_pub = self.create_publisher(Float64, 'feedback/velocity', 10)
         self.feedback_steering_pub = self.create_publisher(Float64, 'feedback/steering', 10)
         
+        self.clock_pub = None
+        self.clock_timer = None
+        if self.publish_clock:
+            self.init_clock_publisher()
+        
         self.tx_thread = threading.Thread(target=self.can_transmit_thread, daemon=True)
         self.rx_thread = threading.Thread(target=self.can_receive_thread, daemon=True)
         self.tx_thread.start()
@@ -98,6 +110,41 @@ class RobotCANInterface(Node):
         
         self.get_logger().info('robot CAN Interface Node initialized')
         self.get_logger().info('Subscribing to: cmd_velocity (Float64) and cmd_steering (Float64)')
+    
+    def init_clock_publisher(self):
+        if self.get_parameter('use_sim_time').value:
+            self.get_logger().warn(
+                'use_sim_time is true on this node while it is the /clock source; '
+                'not publishing /clock to avoid a circular time source'
+            )
+            self.publish_clock = False
+            return
+        
+        # Reliable/depth 1 is compatible with the best-effort, depth 1 subscription
+        # that rclpy/rclcpp time sources use for /clock.
+        clock_qos = QoSProfile(
+            depth=1,
+            reliability=ReliabilityPolicy.RELIABLE,
+            history=HistoryPolicy.KEEP_LAST,
+            durability=DurabilityPolicy.VOLATILE
+        )
+        self.clock_pub = self.create_publisher(ClockMsg, '/clock', clock_qos)
+        
+        # Wall-clock source, so the timer and the published time stay independent
+        # of any use_sim_time setting.
+        self.system_clock = Clock(clock_type=ClockType.SYSTEM_TIME)
+        self.clock_timer = self.create_timer(
+            1.0 / self.clock_rate_hz,
+            self.publish_clock_callback,
+            clock=self.system_clock
+        )
+        
+        self.get_logger().info(f'Publishing /clock at {self.clock_rate_hz:.1f}Hz')
+    
+    def publish_clock_callback(self):
+        msg = ClockMsg()
+        msg.clock = self.system_clock.now().to_msg()
+        self.clock_pub.publish(msg)
     
     def init_socketcan(self):
         self.setup_can_interface()

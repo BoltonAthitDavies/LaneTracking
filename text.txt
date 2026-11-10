@@ -1,0 +1,22 @@
+ros2 bag record -o dataset/dataset_realv2_001 --max-cache-size 536870912 \
+/cam0/image_raw/compressed \
+/cam1/image_raw/compressed \
+/cmd_steering \
+/cmd_velocity \
+/feedback/steering \
+/feedback/velocity \
+/hwt101ct_yaw_publisher \
+/parameter_events \
+/rosout 
+
+ros2 bag record -o dataset/dataset_realv6_000 --max-cache-size 536870912 \
+/cam0/image_raw/compressed \
+/cam1/image_raw/compressed \
+/cmd_steering \
+/cmd_velocity \
+/feedback/steering \
+/feedback/velocity \
+/hwt101ct_yaw_publisher \
+/parameter_events \
+/clock \
+/rosout 

@@ -139,6 +139,8 @@ RUN chown -R 1000:1000 /home/ubuntu
 # Switch to the correct user and set HOME
 USER 1000
 ENV HOME=/home/ubuntu
+# ROS2 DDS domain for this robot; keep host and container in sync
+ENV ROS_DOMAIN_ID=29
 WORKDIR /home/ubuntu
 
 # Create comprehensive bashrc using echo commands
@@ -195,7 +197,7 @@ RUN echo '# Basic bash configuration' > /home/ubuntu/.bashrc && \
     echo '# Welcome message' >> /home/ubuntu/.bashrc && \
     echo 'echo "ROS2 Humble Docker Environment Ready!"' >> /home/ubuntu/.bashrc && \
     echo 'echo "Run ros2_build to build your workspace"' >> /home/ubuntu/.bashrc
-    # echo 'export ROS_DOMAIN_ID=30' >> /home/ubuntu/.bashrc && \
+    # ROS_DOMAIN_ID is set as an ENV above (29), not via .bashrc
     # echo 'export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp' >> /home/ubuntu/.bashrc
 
 # Install as root

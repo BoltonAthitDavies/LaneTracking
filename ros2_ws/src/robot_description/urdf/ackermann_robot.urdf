@@ -343,7 +343,8 @@
   <joint name="cam_link1_joint" type="fixed">
     <parent link="base_link"/>
     <child link="cam_link1"/>
-    <origin xyz="0.409 0 0.2845" rpy="0 0.436332313 0"/> <!-- 0.436332313 rad = 25 degree -->
+    <!-- <origin xyz="0.409 0 0.2845" rpy="0 0.436332313 0"/> 0.436332313 rad = 25 degree -->
+    <origin xyz="0.409 0 0.2845" rpy="0 0 0"/> 
   </joint>
 
   <!-- cam_link2 Joint -->

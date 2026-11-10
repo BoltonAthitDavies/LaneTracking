@@ -58,6 +58,9 @@ install(PROGRAMS
   scripts/stereo_fisheye2depth_lane_detect_pipeline.py
   scripts/stereo_fisheye2depth_pipeline_add_sgbm_wls.py
   scripts/mono_fisheye_undistort.py
+  scripts/fisheye_undistort_node.py
+  scripts/hwt101ct_yaw_publisher.py
+  scripts/realsense_imu_publisher.py
   scripts/left_cam_recorder_node.py
   scripts/stereo_cam_recorder_node.py
   scripts/config.py

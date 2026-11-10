@@ -42,12 +42,16 @@ docker run -it --rm \
   --runtime nvidia \
   --network=host \
   --privileged \
+  -e ROS_DOMAIN_ID=29 \
   -e DISPLAY=$DISPLAY \
   -v /tmp/.X11-unix:/tmp/.X11-unix \
   -v /dev/video0:/dev/video0 \
   -v /dev/video1:/dev/video1 \
   -v /dev/ttyCANable:/dev/ttyCANable \
   -v /dev/ttyUSB0:/dev/ttyUSB0 \
+  -v /dev/bus/usb:/dev/bus/usb \
+  -v /home/nvidia/torch-py38/lib/python3.8/site-packages/pyrealsense2:/usr/local/lib/python3.8/dist-packages/pyrealsense2:ro \
+  -v /home/nvidia/librealsense-src/build/Release:/home/nvidia/librealsense-src/build/Release:ro \
   -v ~/LaneTracking:/home/ubuntu/LaneTracking \
   lanetracking/ros:humble
 ```
@@ -56,6 +60,21 @@ docker run -it --rm \
 > ```bash
 > xhost +local:docker
 > ```
+
+> The `/dev/bus/usb`, `pyrealsense2`, and `librealsense-src/build/Release`
+> mounts are for the RealSense D455 IMU (`realsense_imu_publisher.py`,
+> launched by `dual_camera.launch.py`). The D455's motion module talks over
+> raw USB, not `/dev/videoN`, so it needs the USB bus passed through. The
+> `pyrealsense2` mount reuses a working build from the host's `torch-py38`
+> venv, built from librealsense source at `v2.56.5` — the pip wheel for
+> aarch64 tops out at `2.55.1.6486`, which has a device enumeration bug on
+> this host's kernel/UVC driver. That built `.so` dynamically links
+> `librealsense2.so` via an absolute-path RUNPATH into `librealsense-src`'s
+> build output (not a system lib), so **both** mounts are required together —
+> the `pyrealsense2` mount alone fails with `librealsense2.so.2.56: cannot
+> open shared object file`. If you rebuild the venv or the librealsense
+> source tree from scratch, redo the source build before these mounts will
+> work again.
 
 **Open a second terminal inside the same running container:**
 ```bash
@@ -226,9 +245,7 @@ Then, in another terminal, run the estimator against the real calibration
 from this rig's `fisheye_calibration.json` intrinsics and `camera0/1_rot_trans.dat` stereo
 extrinsics):
 ```bash
-ros2 run vins_fusion_ros2 vins_fusion_ros2_node --ros-args \
-  -p config_file:=/home/ubuntu/LaneTracking/vins_fusion_ros2/config/wil/stereo.yaml \
-  -p use_sim_time:=false
+ros2 run vins_fusion_ros2 vins_fusion_ros2_node --ros-args -p config_file:=/home/ubuntu/LaneTracking/vins_fusion_ros2/config/wil/stereo.yaml -p use_sim_time:=false
 ```
 
 > `cam1_fisheye.yaml` currently reuses cam0's intrinsics since only one mono calibration exists

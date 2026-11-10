@@ -9,3 +9,6 @@ hostname -I
 
 # build docker (On the host)
 cd ~/LaneTracking/Docker && ./docker.sh build
+
+# record a bag (compressed camera topics, bigger writer cache -- see record_bag.sh)
+./record_bag.sh

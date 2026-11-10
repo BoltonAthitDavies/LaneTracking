@@ -15,12 +15,13 @@ def generate_launch_description():
         executable='v4l2_camera_node',
         namespace='cam0',
         parameters=[{
-            'video_device': '/dev/video0',
+            'video_device': '/dev/video8',
             # 'camera_info_url': path_yaml_cam0,
             'pixel_format': 'UYVY',
             'image_size': [1920, 1080],
             'frame_id': 'camera0_frame',
-            'output_encoding': 'yuv422',
+            # 'output_encoding': 'yuv422'
+            'output_encoding': 'rgb8',
         }]
     )
 
@@ -29,16 +30,37 @@ def generate_launch_description():
         executable='v4l2_camera_node',
         namespace='cam1',
         parameters=[{
-            'video_device': '/dev/video1',
+            'video_device': '/dev/video9',
             'pixel_format': 'UYVY',
             'image_size': [1920, 1080],
-            'frame_id': 'camera0_frame',
-            'output_encoding': 'yuv422',
+            'frame_id': 'camera1_frame',
+            # 'output_encoding': 'yuv422'
+            'output_encoding': 'rgb8',
         }]
+    )
+
+    undistort_node = Node(
+        package='robot_camera',
+        executable='fisheye_undistort_node.py',
+        name='fisheye_undistort_node',
+    )
+
+    imu_node = Node(
+        package='robot_camera',
+        executable='realsense_imu_publisher.py',
+        name='realsense_imu_node',
+        parameters=[{
+            'gyro_rate_hz': 200.0,  # D455 motion module offers 200 or 400 Hz; matches the HWT101's 200 Hz
+        }],
+        remappings=[
+            ('realsense_imu_publisher', 'hwt101ct_yaw_publisher'),
+        ]
     )
 
     launch_description = LaunchDescription()
     launch_description.add_action(cam0_node)
     launch_description.add_action(cam1_node)
+    launch_description.add_action(undistort_node)
+    launch_description.add_action(imu_node)
 
     return launch_description

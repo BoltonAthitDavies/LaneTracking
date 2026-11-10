@@ -1,0 +1,142 @@
+#!/usr/bin/env bash
+# colcon build for BOTH workspaces inside the combined container.
+#
+#   ws_build            # wil_project, then LaneTracking
+#   ws_build wil        # only wil_project
+#   ws_build lane       # only LaneTracking
+#   ws_build wil --packages-select orbslam3_ros2
+#
+# wil_project builds into build_docker/ and install_docker/ so a workspace that
+# was ever built on a host keeps its own build/ and install/ untouched (those
+# link against host paths and would not load here). LaneTracking uses the
+# ordinary build/ and install/, which is what its README and aliases expect.
+#
+# The simulation packages are deliberately NOT built: this image has no Gazebo
+# Fortress and no ros_gz, because ROS 2 Humble has no focal binaries for them
+# and the real rig does not simulate. aws_robomaker_small_warehouse_world and
+# rtabmap's sim-only launches are therefore out of the package set.
+set -euo pipefail
+
+WIL_WS="${WIL_WS:-$HOME/wil_project}"
+LANE_WS="${LANE_WS:-$HOME/LaneTracking/ros2_ws}"
+
+set +u
+source /opt/ros/humble/setup.bash
+[ -f /opt/wil/rosdeps/setup.bash ] && source /opt/wil/rosdeps/setup.bash
+[ -f /opt/wil/nav2/setup.bash ]    && source /opt/wil/nav2/setup.bash
+set -u
+
+SYMLINK=(--symlink-install)
+[ "${WS_SYMLINK:-1}" = "0" ] && SYMLINK=()
+
+build_wil() {
+    [ -d "$WIL_WS" ] || { echo "[ws_build] no $WIL_WS -- is the repo bind-mounted?" >&2; return 1; }
+    cd "$WIL_WS"
+
+    # Where ORB-SLAM3 and Pangolin live. The repository is bind-mounted, so its
+    # own thirdparty/ holds the UNBUILT submodule checkout; the built pair is in
+    # the image. orbslam3_ros2/CMakeLists.txt exposes both locations as cache
+    # variables for exactly this case, so they are pointed at the image copy
+    # rather than symlinked over the host tree -- nothing here writes into the
+    # mounted repository.
+    local orb_args=()
+    if [ -e thirdparty/ORB_SLAM3/lib/libORB_SLAM3.so ]; then
+        echo "[ws_build] ORB-SLAM3: using the workspace's own thirdparty/ build"
+    elif [ -e /opt/wil/thirdparty/ORB_SLAM3/lib/libORB_SLAM3.so ]; then
+        echo "[ws_build] ORB-SLAM3: using the image's build in /opt/wil/thirdparty"
+        orb_args=(-DORB_SLAM3_ROOT=/opt/wil/thirdparty/ORB_SLAM3
+                  -DTHIRDPARTY_PREFIX=/opt/wil/thirdparty/install)
+    else
+        echo "[ws_build] no libORB_SLAM3.so in $WIL_WS/thirdparty or /opt/wil/thirdparty" >&2
+        return 1
+    fi
+
+    # thirdparty/ carries CMakeLists.txt files colcon would otherwise try to
+    # build; wil_project already ships thirdparty/COLCON_IGNORE, so this only
+    # creates it if absent. The Gazebo warehouse-world package needs no
+    # COLCON_IGNORE -- --packages-up-to already excludes it, and writing one
+    # would dirty that submodule for no reason.
+    [ -e thirdparty/COLCON_IGNORE ] || touch thirdparty/COLCON_IGNORE 2>/dev/null || true
+
+    echo "[ws_build] wil_project -> $WIL_WS/install_docker"
+
+    # Memory, not CPU, is the binding constraint here. This Jetson has 15 GB and
+    # only zram swap, while rtabmap_sync's CommonDataSubscriberRGBD2..6.cpp and
+    # ORB-SLAM3's Optimizer.cc instantiate templates heavily enough to push a
+    # single cc1plus past 4 GB RSS. Several of those in one parallel wave get the
+    # compiler OOM-killed, and gcc reports only
+    #   c++: fatal error: Killed signal terminated program cc1plus
+    # with no error: line, so it reads as a mystery failure.
+    #
+    # Same ladder build_orbslam3.sh already uses: drop the job count and retry.
+    # make keeps the objects it finished, so each retry resumes rather than
+    # restarting. Retried ONLY on that OOM signature -- a real compile error
+    # fails immediately instead of being hidden behind three slow retries.
+    local log; log="$(mktemp)"
+    local jobs ok=1
+    for jobs in ${WS_JOBS_LADDER:-4 2 1}; do
+        echo "[ws_build] colcon with -j$jobs"
+        if MAKEFLAGS="-j$jobs" colcon build \
+                "${SYMLINK[@]}" \
+                --build-base build_docker \
+                --install-base install_docker \
+                --parallel-workers "$jobs" \
+                --cmake-args -DCMAKE_BUILD_TYPE=Release "${orb_args[@]}" \
+                --packages-up-to rtabmap_slam orbslam3_ros2 vins_fusion_ros2 \
+                                 realsense_imu vslam_navigation \
+                "$@" 2>&1 | tee "$log"; then
+            ok=0; break
+        fi
+        if ! grep -q "Killed signal terminated program" "$log"; then
+            echo "[ws_build] failed, and not an OOM kill -- not retrying." >&2
+            break
+        fi
+        echo "[ws_build] cc1plus was OOM-killed at -j$jobs; retrying lower." >&2
+    done
+    rm -f "$log"
+    return $ok
+}
+
+build_lane() {
+    [ -d "$LANE_WS" ] || { echo "[ws_build] no $LANE_WS -- is the repo bind-mounted?" >&2; return 1; }
+    cd "$LANE_WS"
+
+    # src/vins_fusion_ros2 is a symlink to a tree that was removed from the
+    # repo root; VINS now comes from wil_project. A dangling symlink makes
+    # colcon's crawler noisy, so drop it from the scan.
+    if [ -L src/vins_fusion_ros2 ] && [ ! -e src/vins_fusion_ros2 ]; then
+        echo "[ws_build] ignoring dangling symlink src/vins_fusion_ros2 (VINS comes from wil_project)"
+        rm -f src/vins_fusion_ros2
+    fi
+
+    set +u
+    [ -f "$WIL_WS/install_docker/setup.bash" ] && source "$WIL_WS/install_docker/setup.bash"
+    set -u
+
+    # Same split wil_project uses, and for a second reason here: this
+    # workspace's existing build/, install/ and log/ are owned by root:root
+    # from earlier container runs that executed as root, so a uid-1000 build
+    # cannot write into them --
+    #   PermissionError: [Errno 13] Permission denied: 'log/build_...'
+    # Writing to *_docker/ sidesteps that without needing sudo on the host and
+    # without clobbering whatever those directories currently hold. The stale
+    # root-owned trio can be removed at your leisure:
+    #   sudo rm -rf ~/LaneTracking/ros2_ws/{build,install,log}
+    echo "[ws_build] LaneTracking -> $LANE_WS/install_docker"
+    colcon --log-base log_docker build \
+        "${SYMLINK[@]}" \
+        --build-base build_docker \
+        --install-base install_docker \
+        --cmake-args -DCMAKE_BUILD_TYPE=Release \
+        "$@"
+}
+
+case "${1:-all}" in
+    wil)  shift; build_wil "$@" ;;
+    lane) shift; build_lane "$@" ;;
+    all)  shift || true; build_wil; build_lane ;;
+    *)    echo "usage: ws_build [all|wil|lane] [colcon args...]" >&2; exit 2 ;;
+esac
+
+echo
+echo "[ws_build] done. Open a new shell, or: source ~/.bashrc"
